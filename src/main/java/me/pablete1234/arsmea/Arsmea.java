@@ -1,6 +1,7 @@
 package me.pablete1234.arsmea;
 
 import com.google.common.collect.Lists;
+import me.pablete1234.arsmea.modules.HeadDrop;
 import me.pablete1234.arsmea.util.Config;
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
@@ -53,6 +54,7 @@ public class Arsmea extends JavaPlugin {
 
     private void buildModules() {
         buildModules(Arrays.asList(
+                HeadDrop.class
         ));
     }
 

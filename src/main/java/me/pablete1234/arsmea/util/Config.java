@@ -7,6 +7,8 @@ import java.util.List;
 
 public class Config {
 
+    public static boolean dropHeadsOnDeath = true;
+
     public static void reload(FileConfiguration config) {
         try {
             for (Field field : Config.class.getFields()) {
