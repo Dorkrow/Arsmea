@@ -8,6 +8,7 @@ import java.util.List;
 public class Config {
 
     public static boolean dropHeadsOnDeath = true;
+    public static boolean placeHeadOnDeath = true;
 
     public static void reload(FileConfiguration config) {
         try {
