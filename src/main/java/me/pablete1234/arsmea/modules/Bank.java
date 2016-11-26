@@ -38,7 +38,7 @@ public class Bank implements ListenerModule, CommandHandlerModule {
     private static final String MONEY_FILE = "money.json";
     private static final String LOCATIONS_FILE = "locations.json";
 
-    private static final String MONEY_NAME = ChatColor.translateAlternateColorCodes('`', Config.moneyName);
+    private static final String MONEY_NAME = ChatColor.translateAlternateColorCodes('`', Config.bank_moneyName);
 
     private static List<BlockVector> locations;
     private static Map<UUID, Integer> money;
@@ -61,7 +61,7 @@ public class Bank implements ListenerModule, CommandHandlerModule {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onClickBank(PlayerInteractEvent event) {
-        if (!Config.banksEnabled || !event.getHand().equals(EquipmentSlot.HAND)
+        if (!Config.bank_enabled || !event.getHand().equals(EquipmentSlot.HAND)
                 || event.getClickedBlock() == null || !locations.contains(Vectors.toBlockVector(event.getClickedBlock()))) return;
         Player player = event.getPlayer();
         if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) putMoney(player);
@@ -88,7 +88,7 @@ public class Bank implements ListenerModule, CommandHandlerModule {
     }
 
     private static void sendBalance(Player player) {
-        ActionBar.sendChatPacket(player, ChatColor.translateAlternateColorCodes('`', Config.bankBalanceDisplayName)
+        ActionBar.sendChatPacket(player, ChatColor.translateAlternateColorCodes('`', Config.bank_balanceDisplay)
                 .replace("%money%", "" + getMoney(player.getUniqueId())));
     }
 

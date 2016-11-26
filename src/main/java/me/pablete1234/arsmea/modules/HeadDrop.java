@@ -58,10 +58,10 @@ public class HeadDrop implements ListenerModule {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (!Config.dropHeadsOnDeath) return;
+        if (!Config.headDrop_enabled) return;
         Player p = event.getEntity();
         Block block = null;
-        if (Config.placeHeadOnDeath)
+        if (Config.headDrop_placeHead)
             block = findUsableBlock(p.getLocation().getBlock());
         if (block != null) {
             if (!block.getType().equals(Material.AIR))
