@@ -9,6 +9,9 @@ public class Config {
 
     public static boolean dropHeadsOnDeath = true;
     public static boolean placeHeadOnDeath = true;
+    public static boolean banksEnabled = true;
+    public static String moneyName = "`bMeya";
+    public static String bankBalanceDisplayName = "`bBank balance: `a%money%";
 
     public static void reload(FileConfiguration config) {
         try {

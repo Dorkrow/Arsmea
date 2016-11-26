@@ -1,9 +1,17 @@
 package me.pablete1234.arsmea;
 
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import ee.ellytr.command.CommandExecutor;
+import ee.ellytr.command.CommandRegistry;
+import ee.ellytr.command.exception.CommandException;
+import me.pablete1234.arsmea.modules.Bank;
 import me.pablete1234.arsmea.modules.HeadDrop;
 import me.pablete1234.arsmea.util.Config;
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -17,11 +25,18 @@ public class Arsmea extends JavaPlugin {
     private final static String MINECRAFT_VERSION = "1.11";
 
     private static Arsmea instance;
+    private static Gson gson = new GsonBuilder()./*enableComplexMapKeySerialization().*/create();
+    private CommandRegistry commandRegistry = new CommandRegistry(this);
+    private CommandExecutor commandExecutor;
 
     private List<Module> loadedModules = Lists.newArrayList();
 
     public static Arsmea instance() {
         return instance;
+    }
+
+    public static Gson getGson() {
+        return gson;
     }
 
     @Override
@@ -33,13 +48,7 @@ public class Arsmea extends JavaPlugin {
         saveConfig();
 
         buildModules();
-    }
-
-    @Override
-    public void reloadConfig() {
-        super.reloadConfig();
-        Config.reload(getConfig());
-        saveConfig();
+        registerCommands();
     }
 
     private void checkCraftVersion() {
@@ -52,13 +61,22 @@ public class Arsmea extends JavaPlugin {
         }
     }
 
+    private void registerCommands() {
+        //ProviderRegistry providerRegistry = commandRegistry.getProviderRegistry();
+
+        commandRegistry.register();
+        commandExecutor = new CommandExecutor(commandRegistry.getFactory());
+    }
+
+
     private void buildModules() {
         buildModules(Arrays.asList(
-                HeadDrop.class
+                HeadDrop.class,
+                Bank.class
         ));
     }
 
-    private <T extends Module> void buildModules(List<Class<T>> moduleClasses){
+    private void buildModules(List<Class<? extends Module>> moduleClasses){
         for (Class<? extends Module> cl : moduleClasses) {
             try {
                 loadedModules.add(buildModule(cl.getConstructor().newInstance()));
@@ -72,6 +90,10 @@ public class Arsmea extends JavaPlugin {
     private <T extends Module> T buildModule(T module) {
         if (module instanceof ListenerModule)
             Bukkit.getPluginManager().registerEvents((ListenerModule) module, this);
+        if (module instanceof CommandHandlerModule) {
+            Bukkit.broadcastMessage("Registered: " + module.getClass().getSimpleName());
+            commandRegistry.addClass(module.getClass());
+        }
         module.load();
         return module;
     }
@@ -94,5 +116,21 @@ public class Arsmea extends JavaPlugin {
         module.unload();
     }
 
+    @Override
+    public void reloadConfig() {
+        super.reloadConfig();
+        Config.reload(getConfig());
+        saveConfig();
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        try {
+            commandExecutor.execute(command.getName(), sender, args);
+        } catch (CommandException ex) {
+            ex.printStackTrace();
+        }
+        return true;
+    }
 
 }

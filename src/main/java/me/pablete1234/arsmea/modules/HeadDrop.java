@@ -2,13 +2,11 @@ package me.pablete1234.arsmea.modules;
 
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import me.pablete1234.arsmea.Arsmea;
 import me.pablete1234.arsmea.ListenerModule;
 import me.pablete1234.arsmea.util.Config;
+import me.pablete1234.arsmea.util.Vectors;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.SkullType;
 import org.bukkit.block.Block;
@@ -26,11 +24,6 @@ import org.bukkit.material.MaterialData;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -49,33 +42,18 @@ public class HeadDrop implements ListenerModule {
             Material.WOODEN_DOOR,
             Material.IRON_DOOR_BLOCK);
 
-    private static final String REMOVED_BLOCKS_FILE = "HeadDrop_removedBlocks.json";
-    private static final Gson gson = new GsonBuilder().enableComplexMapKeySerialization().create();
+    private static final String REMOVED_BLOCKS_FILE = "removedBlocks.json";
 
     private Map<BlockVector, MaterialData> removedBlocks;
 
     @Override
     public void load() {
-        File input = new File(Arsmea.instance().getDataFolder().getPath() + File.separator + REMOVED_BLOCKS_FILE);
-        if (input.exists()) {
-            try {
-                removedBlocks = gson.fromJson(new FileReader(input), new TypeToken<Map<BlockVector, MaterialData>>(){}.getType());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        if (removedBlocks == null) removedBlocks = new HashMap<>();
+        removedBlocks = unserialize(REMOVED_BLOCKS_FILE, new TypeToken<HashMap<BlockVector, MaterialData>>(){}, new HashMap<>());
     }
 
     @Override
     public void unload() {
-        File output = new File(Arsmea.instance().getDataFolder().getPath() + File.separator + REMOVED_BLOCKS_FILE);
-        try {
-            output.delete();
-            Files.write(output.toPath(), gson.toJson(removedBlocks).getBytes(), StandardOpenOption.CREATE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        serialize(REMOVED_BLOCKS_FILE, removedBlocks);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -87,7 +65,7 @@ public class HeadDrop implements ListenerModule {
             block = findUsableBlock(p.getLocation().getBlock());
         if (block != null) {
             if (!block.getType().equals(Material.AIR))
-                removedBlocks.put(toBlockVector(block), block.getState().getData());
+                removedBlocks.put(Vectors.toBlockVector(block), block.getState().getData());
             block.setType(Material.SKULL);
             Skull state = (Skull) block.getState();
             state.setSkullType(SkullType.PLAYER);
@@ -106,7 +84,7 @@ public class HeadDrop implements ListenerModule {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerBreakBlock(BlockBreakEvent event) {
-        BlockVector loc = toBlockVector(event.getBlock().getLocation());
+        BlockVector loc = Vectors.toBlockVector(event.getBlock().getLocation());
         if (removedBlocks.containsKey(loc)) {
             MaterialData oldData = removedBlocks.get(loc);
             Block block = event.getBlock();
@@ -118,14 +96,6 @@ public class HeadDrop implements ListenerModule {
                 newState.update();
             });
         }
-    }
-
-    private static BlockVector toBlockVector(Location location) {
-        return new BlockVector(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-    }
-
-    private static BlockVector toBlockVector(Block block) {
-        return toBlockVector(block.getLocation());
     }
 
     private Block findUsableBlock(Block source) {
