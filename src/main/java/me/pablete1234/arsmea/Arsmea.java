@@ -5,11 +5,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import ee.ellytr.command.CommandExecutor;
 import ee.ellytr.command.CommandRegistry;
+import ee.ellytr.command.exception.CommandConsoleException;
 import ee.ellytr.command.exception.CommandException;
+import ee.ellytr.command.exception.CommandPermissionException;
+import ee.ellytr.command.exception.CommandPlayerException;
+import ee.ellytr.command.exception.CommandUsageException;
 import me.pablete1234.arsmea.modules.Bank;
 import me.pablete1234.arsmea.modules.HeadDrop;
 import me.pablete1234.arsmea.util.Config;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.HandlerList;
@@ -91,7 +96,6 @@ public class Arsmea extends JavaPlugin {
         if (module instanceof ListenerModule)
             Bukkit.getPluginManager().registerEvents((ListenerModule) module, this);
         if (module instanceof CommandHandlerModule) {
-            Bukkit.broadcastMessage("Registered: " + module.getClass().getSimpleName());
             commandRegistry.addClass(module.getClass());
         }
         module.load();
@@ -127,8 +131,36 @@ public class Arsmea extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         try {
             commandExecutor.execute(command.getName(), sender, args);
-        } catch (CommandException ex) {
-            ex.printStackTrace();
+        } catch (CommandUsageException e) {
+            String error = ChatColor.RED + "";
+            switch (e.getError()) {
+                case TOO_FEW_ARGUMENTS:
+                    error += "Too few arguments.";
+                    break;
+                case TOO_MANY_ARGUMENTS:
+                    error += "Too many arguments.";
+                    break;
+                case INVALID_USAGE:
+                    error += "Invalid usage.";
+                    break;
+                case INVALID_ARGUMENTS:
+                    error += "Invalid argument.";
+                    break;
+            }
+            sender.sendMessage(error);
+        } catch (CommandException e) {
+            String error = ChatColor.RED + "";
+            if (e instanceof CommandConsoleException) {
+                error += "Console may not use this command.";
+            } else if (e instanceof CommandPlayerException) {
+                error += "Player may not use this command.";
+            } else if (e instanceof CommandPermissionException) {
+                error += "You do not have permissions to run this command.";
+            } else {
+                error += "Unknown error.";
+                e.printStackTrace();
+            }
+            sender.sendMessage(error);
         }
         return true;
     }

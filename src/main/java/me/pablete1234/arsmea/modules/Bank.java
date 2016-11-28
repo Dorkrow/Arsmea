@@ -10,10 +10,13 @@ import ee.ellytr.command.argument.Optional;
 import me.pablete1234.arsmea.CommandHandlerModule;
 import me.pablete1234.arsmea.ListenerModule;
 import me.pablete1234.arsmea.util.ActionBar;
+import me.pablete1234.arsmea.util.ChatUtil;
 import me.pablete1234.arsmea.util.Config;
 import me.pablete1234.arsmea.util.Vectors;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -28,6 +31,7 @@ import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,10 +47,6 @@ public class Bank implements ListenerModule, CommandHandlerModule {
     private static List<BlockVector> locations;
     private static Map<UUID, Integer> money;
 
-    private static List<BlockVector> getLocations() {
-        return locations;
-    }
-
     @Override
     public void load() {
         locations = unserialize(LOCATIONS_FILE, new TypeToken<List<BlockVector>>(){}, Lists.newArrayList());
@@ -61,7 +61,7 @@ public class Bank implements ListenerModule, CommandHandlerModule {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onClickBank(PlayerInteractEvent event) {
-        if (!Config.bank_enabled || !event.getHand().equals(EquipmentSlot.HAND)
+        if (!Config.bank_enabled || event.getHand() == null || !event.getHand().equals(EquipmentSlot.HAND)
                 || event.getClickedBlock() == null || !locations.contains(Vectors.toBlockVector(event.getClickedBlock()))) return;
         Player player = event.getPlayer();
         if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) putMoney(player);
@@ -128,40 +128,80 @@ public class Bank implements ListenerModule, CommandHandlerModule {
 
 
 
-    @Command(aliases = "money", description = "Give yourself money", permissions = "arsmea.money")
-    @PlayerCommand()
-    public static void money(CommandContext cmd, Integer quantity, @Optional(defaultValue = "1") Integer value) {
-        ((Player) cmd.getSender()).getInventory().addItem(getMoney(quantity, value));
+    @Command(aliases = "money", description = "Money managing commands", min = 1)
+    @NestedCommands(MoneyChildCommands.class)
+    public static void money(CommandContext cmd) {
     }
 
-    @Command(aliases = "bank", description = "Bank managing commands")
+    public static class MoneyChildCommands {
+
+        @Command(aliases = {"add"}, description = "Add money to a bank account", permissions = "arsmea.money.add", min = 1)
+        @PlayerCommand()
+        public static void add(CommandContext cmd, Integer value, @Optional OfflinePlayer player) {
+            addMoney((player == null ? (Player) cmd.getSender() : player).getUniqueId(), value);
+            cmd.getSender().sendMessage(ChatColor.GREEN + "Added " + value + " " + MONEY_NAME + ChatColor.RESET
+                    + ChatColor.GREEN + " to " + (player == null ? "your" : player.getName() + "'s") + " account.");
+        }
+
+        @Command(aliases = {"give"}, description = "Give money to players", permissions = "arsmea.money.give", min = 1, max = 3)
+        @PlayerCommand()
+        public static void give(CommandContext cmd, Integer quantity, @Optional(defaultValue = "1") Integer value, @Optional Player player) {
+            if (value == null) value = 1;
+            (player == null ? (Player) cmd.getSender() : player).getInventory().addItem(getMoney(quantity, value));
+            cmd.getSender().sendMessage(ChatColor.GREEN + "Given " + (player == null ? "yourself " : "") + quantity
+                    + " " + MONEY_NAME + ChatColor.RESET + ChatColor.GREEN + " of value " + value +
+                    (player != null ? " to " + player.getName() : "") + ".");
+        }
+
+        @Command(aliases = {"list"}, description = "List the player's currency", permissions = "arsmea.money.list", max = 1)
+        @PlayerCommand()
+        public static void list(CommandContext cmd, @Optional(defaultValue = "1") Integer page) {
+            ChatUtil.paginate(cmd.getSender(), "Bank Accounts", page, money.size(), 8, money.entrySet().stream().sorted(
+                    Comparator.comparingInt(Map.Entry::getValue)),
+                    entry -> " ${index}. " + ChatColor.GOLD + Bukkit.getOfflinePlayer(entry.getKey()).getName() + ChatColor.RESET + ": " + ChatColor.AQUA + entry.getValue());
+        }
+
+    }
+
+    @Command(aliases = "bank", description = "Bank managing commands", min = 1)
     @NestedCommands(BankChildCommands.class)
     public static void bank(CommandContext cmd) {
     }
 
     public static class BankChildCommands {
 
-        @Command(aliases = {"add", "create"}, description = "Create a new bank where you are standing on", permissions = "arsmea.bank.add")
+        @Command(aliases = {"create"}, description = "Create a new bank where you are standing on", permissions = "arsmea.bank.create", max = 0)
         @PlayerCommand()
-        public static void add(CommandContext cmd) {
-            locations.add(Vectors.toBlockVector(((Player) cmd.getSender()).getLocation()));
+        public static void create(CommandContext cmd) {
+            Player sender = (Player) cmd.getSender();
+            BlockVector loc = Vectors.toBlockVector(sender.getLocation());
+            if (locations.contains(loc)) {
+                sender.sendMessage(ChatColor.RED + "A bank already exists at " + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+            } else {
+                locations.add(Vectors.toBlockVector(((Player) cmd.getSender()).getLocation()));
+                sender.sendMessage(ChatColor.GREEN + "Successfully created bank at " + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+            }
         }
 
-        @Command(aliases = {"list"}, description = "List the banks", permissions = "arsmea.bank.list")
+        @Command(aliases = {"show"}, description = "List the banks", permissions = "arsmea.bank.show", max = 1)
         @PlayerCommand()
-        public static void list(CommandContext cmd, @Optional Integer rad) {
+        public static void show(CommandContext cmd, @Optional Integer rad) {
             Player sender = (Player) cmd.getSender();
             Vector loc = sender.getLocation().toVector();
             locations.stream().filter(vec -> rad == null || vec.distance(loc) <= rad).forEach(bank ->
-                    sender.sendMessage("Bank:" + bank.getBlockX() + "," + bank.getBlockY() + "," + bank.getBlockZ()));
+                    sender.sendMessage(ChatColor.GOLD + "Bank: " + ChatColor.AQUA + bank.getBlockX() + "," + bank.getBlockY() + "," + bank.getBlockZ()));
         }
 
-        @Command(aliases = "remove", description = "Removes the bank you are standing on", permissions = "arsmea.bank.remove")
+        @Command(aliases = "remove", description = "Removes the bank you are standing on", permissions = "arsmea.bank.remove", max = 0)
         @PlayerCommand()
         public static void remove(CommandContext cmd) {
             Player sender = (Player) cmd.getSender();
             BlockVector loc = Vectors.toBlockVector(sender.getLocation());
-            locations.removeIf(vec -> vec.equals(loc));
+            if (locations.removeIf(vec -> vec.equals(loc))) {
+                sender.sendMessage(ChatColor.GREEN + "Successfully removed bank at " + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ());
+            } else {
+                sender.sendMessage(ChatColor.RED + "You are not standing on a bank.");
+            }
         }
 
     }
