@@ -1,5 +1,6 @@
 package me.pablete1234.arsmea.util;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Method;
@@ -7,8 +8,8 @@ import java.lang.reflect.Method;
 
 public class ActionBar {
 
-    private static final String nms = "net.minecraft.server.v1_11_R1.";
-    private static final String bukkit = "org.bukkit.craftbukkit.v1_11_R1.";
+    private static final String nms;
+    private static final String bukkit;
 
     private static Class<?> iChatBaseCl;
     private static Class<?> chatPacketCl;
@@ -17,6 +18,9 @@ public class ActionBar {
     private static Method sendPacketMh;
 
     static {
+        String version = Bukkit.getServer().getClass().getPackage().getName().split("\\.")[3];
+        nms = "net.minecraft.server." + version + ".";
+        bukkit = "org.bukkit.craftbukkit." + version + ".";
         try {
             iChatBaseCl = Class.forName(nms + "IChatBaseComponent");
             chatPacketCl = Class.forName(nms + "PacketPlayOutChat");
