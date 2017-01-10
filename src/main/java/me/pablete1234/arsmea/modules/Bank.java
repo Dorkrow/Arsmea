@@ -157,7 +157,7 @@ public class Bank implements ListenerModule, CommandHandlerModule {
         @PlayerCommand()
         public static void list(CommandContext cmd, @Optional(defaultValue = "1") Integer page) {
             ChatUtil.paginate(cmd.getSender(), "Bank Accounts", page, money.size(), 8, money.entrySet().stream().sorted(
-                    Comparator.comparingInt(Map.Entry::getValue)),
+                    Comparator.comparingInt(Map.Entry<UUID, Integer>::getValue).reversed()),
                     entry -> " ${index}. " + ChatColor.GOLD + Bukkit.getOfflinePlayer(entry.getKey()).getName() + ChatColor.RESET + ": " + ChatColor.AQUA + entry.getValue());
         }
 
