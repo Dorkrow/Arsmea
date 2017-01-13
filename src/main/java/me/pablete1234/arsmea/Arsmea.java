@@ -1,5 +1,19 @@
 package me.pablete1234.arsmea;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
+import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.slf4j.helpers.NOPLogger;
+
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -11,18 +25,10 @@ import ee.ellytr.command.exception.CommandPermissionException;
 import ee.ellytr.command.exception.CommandPlayerException;
 import ee.ellytr.command.exception.CommandUsageException;
 import me.pablete1234.arsmea.modules.Bank;
+import me.pablete1234.arsmea.modules.DiscordBot;
 import me.pablete1234.arsmea.modules.HeadDrop;
 import me.pablete1234.arsmea.util.Config;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.event.HandlerList;
-import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.logging.Level;
+import sx.blah.discord.Discord4J;
 
 public class Arsmea extends JavaPlugin {
 
@@ -48,6 +54,8 @@ public class Arsmea extends JavaPlugin {
         Config.reload(getConfig());
         saveConfig();
 
+        removeDiscordLogger();
+
         buildModules();
         registerCommands();
     }
@@ -59,11 +67,11 @@ public class Arsmea extends JavaPlugin {
         commandExecutor = new CommandExecutor(commandRegistry.getFactory());
     }
 
-
     private void buildModules() {
         buildModules(Arrays.asList(
                 HeadDrop.class,
-                Bank.class
+                Bank.class,
+                DiscordBot.class
         ));
     }
 
@@ -86,6 +94,21 @@ public class Arsmea extends JavaPlugin {
         }
         module.load();
         return module;
+    }
+
+    private void removeDiscordLogger() {
+        try {
+            Field field = Discord4J.class.getDeclaredField("LOGGER");
+            field.setAccessible(true);
+
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+
+            field.set(null, NOPLogger.NOP_LOGGER);
+        } catch (Exception e) {
+            Bukkit.getLogger().log(Level.WARNING, "Could not remove spammy logger from discord api, you'll have to live with some messages every so often!");
+        }
     }
 
     @Override

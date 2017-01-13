@@ -1,18 +1,12 @@
 package me.pablete1234.arsmea.modules;
 
-import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
-import ee.ellytr.command.Command;
-import ee.ellytr.command.CommandContext;
-import ee.ellytr.command.NestedCommands;
-import ee.ellytr.command.PlayerCommand;
-import ee.ellytr.command.argument.Optional;
-import me.pablete1234.arsmea.CommandHandlerModule;
-import me.pablete1234.arsmea.ListenerModule;
-import me.pablete1234.arsmea.util.ActionBar;
-import me.pablete1234.arsmea.util.ChatUtil;
-import me.pablete1234.arsmea.util.Config;
-import me.pablete1234.arsmea.util.Vectors;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -30,12 +24,19 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
+import ee.ellytr.command.Command;
+import ee.ellytr.command.CommandContext;
+import ee.ellytr.command.NestedCommands;
+import ee.ellytr.command.PlayerCommand;
+import ee.ellytr.command.argument.Optional;
+import me.pablete1234.arsmea.CommandHandlerModule;
+import me.pablete1234.arsmea.ListenerModule;
+import me.pablete1234.arsmea.util.ActionBar;
+import me.pablete1234.arsmea.util.ChatUtil;
+import me.pablete1234.arsmea.util.Config;
+import me.pablete1234.arsmea.util.Vectors;
 
 public class Bank implements ListenerModule, CommandHandlerModule {
 
@@ -126,7 +127,10 @@ public class Bank implements ListenerModule, CommandHandlerModule {
         return item;
     }
 
-
+    private static void sendDiscord(String message) {
+        if (!Config.bank_broadcastChannel.equals(""))
+            DiscordBot.sendMessage(Config.bank_broadcastChannel, message);
+    }
 
     @Command(aliases = "money", description = "Money managing commands", min = 1)
     @NestedCommands(MoneyChildCommands.class)
@@ -138,19 +142,23 @@ public class Bank implements ListenerModule, CommandHandlerModule {
         @Command(aliases = {"add"}, description = "Add money to a bank account", permissions = "arsmea.money.add", min = 1)
         @PlayerCommand()
         public static void add(CommandContext cmd, Integer value, @Optional OfflinePlayer player) {
-            addMoney((player == null ? (Player) cmd.getSender() : player).getUniqueId(), value);
+            OfflinePlayer reciver = player == null ? (Player) cmd.getSender() : player;
+            addMoney(reciver.getUniqueId(), value);
             cmd.getSender().sendMessage(ChatColor.GREEN + "Added " + value + " " + MONEY_NAME + ChatColor.RESET
                     + ChatColor.GREEN + " to " + (player == null ? "your" : player.getName() + "'s") + " account.");
+            sendDiscord(cmd.getSender().getName() + " added " + value + " " + MONEY_NAME + " to " + reciver.getName() + "'s account.");
         }
 
         @Command(aliases = {"give"}, description = "Give money to players", permissions = "arsmea.money.give", min = 1, max = 3)
         @PlayerCommand()
         public static void give(CommandContext cmd, Integer quantity, @Optional(defaultValue = "1") Integer value, @Optional Player player) {
             if (value == null) value = 1;
-            (player == null ? (Player) cmd.getSender() : player).getInventory().addItem(getMoney(quantity, value));
+            Player reciver = player == null ? (Player) cmd.getSender() : player;
+            reciver.getInventory().addItem(getMoney(quantity, value));
             cmd.getSender().sendMessage(ChatColor.GREEN + "Given " + (player == null ? "yourself " : "") + quantity
                     + " " + MONEY_NAME + ChatColor.RESET + ChatColor.GREEN + " of value " + value +
                     (player != null ? " to " + player.getName() : "") + ".");
+            sendDiscord(cmd.getSender().getName() + " gave " + quantity * value + " " + MONEY_NAME + " to " + reciver.getName());
         }
 
         @Command(aliases = {"list"}, description = "List the player's currency", permissions = "arsmea.money.list", max = 1)

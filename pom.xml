@@ -24,6 +24,10 @@
             <id>twiz-repo</id>
             <url>http://ci.twizmwaz.in/nexus/content/repositories/release/</url>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -41,6 +45,16 @@
             <groupId>ee.ellytr.command</groupId>
             <artifactId>EllyCommand</artifactId>
             <version>2.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.austinv11</groupId>
+            <artifactId>Discord4j</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.6.4</version>
         </dependency>
     </dependencies>
 
@@ -81,14 +95,20 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                        <configuration>
+                        <!--configuration>
                             <artifactSet>
                                 <includes>
                                     <include>com.google.gson:gson</include>
                                     <include>ee.ellytr.command:EllyCommand</include>
+                                    <include>com.github.austinv11:Discord4j</include-->
+                                    <!-- Other stuff required for Discord4j -->
+                                    <!--include>org.slf4j:slf4j-api</include>
+                                    <include>org.apache.httpcomponents:httpcore</include>
+                                    <include>org.apache.httpcomponents:httpclient</include>
+                                    <include>org.eclipse:jetty</include>
                                 </includes>
                             </artifactSet>
-                        </configuration>
+                        </configuration-->
                     </execution>
                 </executions>
             </plugin>

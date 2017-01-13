@@ -1,9 +1,9 @@
 package me.pablete1234.arsmea.util;
 
-import org.bukkit.configuration.file.FileConfiguration;
-
 import java.lang.reflect.Field;
 import java.util.List;
+
+import org.bukkit.configuration.file.FileConfiguration;
 
 public class Config {
 
@@ -12,6 +12,10 @@ public class Config {
     public static boolean bank_enabled = true;
     public static String bank_moneyName = "`bMeya";
     public static String bank_balanceDisplay = "`bBank Balance: `a%money%";
+    public static String bank_broadcastChannel = "";
+
+    public static boolean discord_enabled = false;
+    public static String discord_token = "";
 
     public static void reload(FileConfiguration config) {
         try {
