@@ -9,7 +9,9 @@ public class Config {
 
     public static boolean headDrop_enabled = true;
     public static boolean headDrop_placeHead = true;
+
     public static boolean bank_enabled = true;
+    public static int bank_initialAmount = 0;
     public static String bank_moneyName = "`bMeya";
     public static String bank_balanceDisplay = "`bBank Balance: `a%money%";
     public static String bank_broadcastChannel = "";
@@ -33,7 +35,7 @@ public class Config {
         }
     }
 
-    public static String toKey(String string) {
+    private static String toKey(String string) {
         return string.replace("_", ".");
     }
 

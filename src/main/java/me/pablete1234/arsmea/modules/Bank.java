@@ -1,6 +1,7 @@
 package me.pablete1234.arsmea.modules;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -95,7 +96,7 @@ public class Bank implements ListenerModule, CommandHandlerModule {
 
     private static void check(UUID uuid) {
         if (!money.containsKey(uuid)) {
-            money.put(uuid, 0);
+            money.put(uuid, Config.bank_initialAmount);
         }
     }
 
@@ -120,7 +121,7 @@ public class Bank implements ListenerModule, CommandHandlerModule {
         ItemStack item = new ItemStack(Material.PAPER, quantity);
         ItemMeta meta = item.getItemMeta();
         meta.setDisplayName(MONEY_NAME);
-        meta.setLore(Arrays.asList(ChatColor.translateAlternateColorCodes('`', "`r`aValue: `b" + value)));
+        meta.setLore(Collections.singletonList(ChatColor.translateAlternateColorCodes('`', "`r`aValue: `b" + value)));
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         meta.addEnchant(Enchantment.DURABILITY, 1, true);
         item.setItemMeta(meta);
