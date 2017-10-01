@@ -32,9 +32,10 @@
 
     <dependencies>
         <dependency>
-          <groupId>org.bukkit</groupId>
-          <artifactId>bukkit</artifactId>
-          <version>1.11.2-R0.1-SNAPSHOT</version>
+            <groupId>org.bukkit</groupId>
+            <artifactId>bukkit</artifactId>
+            <version>1.12.2-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -95,20 +96,6 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                        <!--configuration>
-                            <artifactSet>
-                                <includes>
-                                    <include>com.google.gson:gson</include>
-                                    <include>ee.ellytr.command:EllyCommand</include>
-                                    <include>com.github.austinv11:Discord4j</include-->
-                                    <!-- Other stuff required for Discord4j -->
-                                    <!--include>org.slf4j:slf4j-api</include>
-                                    <include>org.apache.httpcomponents:httpcore</include>
-                                    <include>org.apache.httpcomponents:httpclient</include>
-                                    <include>org.eclipse:jetty</include>
-                                </includes>
-                            </artifactSet>
-                        </configuration-->
                     </execution>
                 </executions>
             </plugin>
@@ -117,12 +104,6 @@
             <resource>
                 <filtering>true</filtering>
                 <directory>src/main/resources</directory>
-            </resource>
-            <resource>
-                <directory>.</directory>
-                <includes>
-                    <include>LICENSE</include>
-                </includes>
             </resource>
         </resources>
     </build>

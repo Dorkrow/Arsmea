@@ -1,6 +1,7 @@
 package me.pablete1234.arsmea.modules;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import me.pablete1234.arsmea.Arsmea;
 import me.pablete1234.arsmea.ListenerModule;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class HeadDrop implements ListenerModule {
 
@@ -101,13 +103,13 @@ public class HeadDrop implements ListenerModule {
     private Block findUsableBlock(Block source) {
         if (isUsable(source)) return source;
         List<Block> nextScan = Lists.newLinkedList();
-        List<Vector> alreadyScanned = Lists.newLinkedList();
+        Set<Vector> alreadyScanned = Sets.newHashSet();
         nextScan.add(source);
         alreadyScanned.add(source.getLocation().toVector());
         return findUsableBlock(nextScan, alreadyScanned);
     }
 
-    private Block findUsableBlock(List<Block> scan, List<Vector> alreadyScanned) {
+    private Block findUsableBlock(List<Block> scan, Set<Vector> alreadyScanned) {
         if (scan.size() == 0) return null;
         List<Block> nextScan = new LinkedList<>();
         for (Block scanning : scan) {
@@ -117,12 +119,9 @@ public class HeadDrop implements ListenerModule {
             }
             for (BlockFace face : FACES) {
                 Block block = scanning.getRelative(face);
-                if (alreadyScanned.contains(block.getLocation().toVector())) continue;
-                if (isUsable(block)) {
-                    return block;
-                } else {
+                if (alreadyScanned.add(block.getLocation().toVector())) {
+                    if (isUsable(block)) return block;
                     nextScan.add(block);
-                    alreadyScanned.add(block.getLocation().toVector());
                 }
             }
         }
